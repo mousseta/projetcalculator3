@@ -1,10 +1,11 @@
 pipeline {
     agent any
+
     environment {
         DOCKER_HUB_CREDENTIALS = 'dockerhub' // Nom de vos identifiants Jenkins
         DOCKER_IMAGE = 'mousse2025/calculator' // Remplacez par votre utilisateur et image Docker Hub
     }
-//test
+
     stages {
         stage("Checkout") {
             steps {
@@ -13,22 +14,26 @@ pipeline {
                     url: 'git@github.com:mousseta/projetcalculator3.git'
             }
         }
+
         stage("Compile") {
             steps {
                 sh './mvnw compile'
             }
         }
+
         stage("Test") {
             steps {
                 sh './mvnw test'
             }
         }
+
         stage("Package") {
             steps {
                 sh './mvnw package'
             }
         }
-        stage('Build') {
+
+        stage('Build Docker Image') {
             steps {
                 script {
                     // Construire l'image Docker
@@ -48,7 +53,7 @@ pipeline {
             }
         }
 
-        stage('Push to Docker Hub') {
+        stage('Push Docker Image') {
             steps {
                 script {
                     // Push de l'image Docker
@@ -56,32 +61,35 @@ pipeline {
                 }
             }
         }
-    }
+
         stage("Run and Test") {
             steps {
-               sh 'chmod +x script.sh'
-               sh './script.sh'
+                sh 'chmod +x script.sh'
+                sh './script.sh'
             }
         }
-       stage('SonarQube analysis') {
-          steps {
-             withSonarQubeEnv('sonarqube') {
-             sh "./mvnw sonar:sonar"
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    sh "./mvnw sonar:sonar"
+                }
             }
-          }
-      }
-      stage("Quality gate") {
-         steps {
-            waitForQualityGate abortPipeline: true
-         }
-     }
+        }
+
+        stage("Quality Gate") {
+            steps {
+                waitForQualityGate abortPipeline: true
+            }
+        }
     }
+
     post {
         always {
-            // Arrêter et supprimer le conteneur
+            // Nettoyage après le pipeline
             sh 'docker stop test || true'
             sh 'docker rm test || true'
             sh 'docker logout'
         }
     }
-
+}
