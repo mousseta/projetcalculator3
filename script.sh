@@ -1,7 +1,7 @@
 # Assurez-vous que le réseau Docker existe
     docker network ls | grep example.com || docker network create --subnet=172.40.0.0/16 example.com
 # Démarrer le conteneur Docker
-    docker run -itd --name test --net example.com --ip 172.40.0.25 -p8082:8081 registry.example.com:5000/projetmaven
+    docker run -itd --name test --net example.com --ip 172.40.0.25 -p8082:8081 ${DOCKER_IMAGE}:latest
 # Attendre que le service soit prêt
 sleep 10
 # Tester le service avec l'adresse IP

@@ -1,5 +1,9 @@
 pipeline {
     agent any
+    environment {
+        DOCKER_HUB_CREDENTIALS = 'dockerhub' // Nom de vos identifiants Jenkins
+        DOCKER_IMAGE = 'mousse2025/calculator' // Remplacez par votre utilisateur et image Docker Hub
+    }
 //test
     stages {
         stage("Checkout") {
@@ -24,16 +28,36 @@ pipeline {
                 sh './mvnw package'
             }
         }
-        stage("Docker Build") {
+       stages {
+        stage('Build') {
             steps {
-                sh 'docker build -t registry.example.com:5000/projetmaven .'
+                script {
+                    // Construire l'image Docker
+                    sh 'docker build -t ${DOCKER_IMAGE}:latest .'
+                }
             }
         }
-        stage("Docker Push") {
+
+        stage('Login to Docker Hub') {
             steps {
-                sh 'docker push registry.example.com:5000/projetmaven'
+                script {
+                    // Connexion à Docker Hub
+                    withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
+                    }
+                }
             }
         }
+
+        stage('Push to Docker Hub') {
+            steps {
+                script {
+                    // Push de l'image Docker
+                    sh 'docker push ${DOCKER_IMAGE}:latest'
+                }
+            }
+        }
+    }
         stage("Run and Test") {
             steps {
                sh 'chmod +x script.sh'
@@ -58,6 +82,7 @@ pipeline {
             // Arrêter et supprimer le conteneur
             sh 'docker stop test || true'
             sh 'docker rm test || true'
+            sh 'docker logout'
         }
     }
 }
