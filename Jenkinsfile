@@ -28,7 +28,6 @@ pipeline {
                 sh './mvnw package'
             }
         }
-       stages {
         stage('Build') {
             steps {
                 script {
